@@ -6,21 +6,46 @@ canvas.height = window.innerHeight;
 
 let particlesArray = [];
 
+// Escucha el cambio de tamaño de ventana para que el canvas siempre cubra todo
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    init(); // Reinicia para redistribuir partículas en el nuevo tamaño
+});
+
 class Particle {
     constructor() {
+        this.init();
+    }
+
+    // Inicializa o reinicia las propiedades de la partícula
+    init() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 1;
-        this.speedX = Math.random() * 1 - 0.5;
-        this.speedY = Math.random() * 1 - 0.5;
+        // Tamaño variado para crear sensación de profundidad (unas más lejos que otras)
+        this.size = Math.random() * 1.5 + 0.2; 
+        // Velocidad muy suave para un look elegante y profesional
+        this.speedX = Math.random() * 0.4 - 0.2;
+        this.speedY = Math.random() * 0.4 - 0.2;
+        // Opacidad aleatoria para que parezcan estrellas reales
+        this.opacity = Math.random() * 0.6 + 0.1;
     }
+
     update() {
         this.x += this.speedX;
         this.y += this.speedY;
-        if (this.size > 0.2) this.size -= 0.01;
+
+        // Lógica de Movimiento Infinito (Edge Wrapping)
+        if (this.x > canvas.width) this.x = 0;
+        else if (this.x < 0) this.x = canvas.width;
+        
+        if (this.y > canvas.height) this.y = 0;
+        else if (this.y < 0) this.y = canvas.height;
     }
+
     draw() {
-        ctx.fillStyle = 'rgba(37, 99, 235, 0.5)';
+        // Color BLANCO con opacidad dinámica
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
@@ -28,39 +53,24 @@ class Particle {
 }
 
 function init() {
-    for (let i = 0; i < 100; i++) {
+    particlesArray = [];
+    const numberOfParticles = 125; // Cantidad balanceada para rendimiento y estética
+    for (let i = 0; i < numberOfParticles; i++) {
         particlesArray.push(new Particle());
     }
 }
 
 function animate() {
+    // Limpia el frame anterior para dibujar el nuevo
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < particlesArray.length; i++) {
-        particlesArray[i].update();
-        particlesArray[i].draw();
-        if (particlesArray[i].size <= 0.2) {
-            particlesArray.splice(i, 1);
-            i--;
-            particlesArray.push(new Particle());
-        }
-    }
+    
+    particlesArray.forEach(p => {
+        p.update();
+        p.draw();
+    });
+    
     requestAnimationFrame(animate);
 }
 
-window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-});
-
 init();
 animate();
-
-// Suavizado de scroll
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        document.querySelector(this.getAttribute('href')).scrollIntoView({
-            behavior: 'smooth'
-        });
-    });
-});
